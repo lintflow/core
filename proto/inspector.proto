@@ -13,9 +13,9 @@ message Task {
         Service service = 1;
         bytes  config = 2;
     }
-    repeated Args validators = 1;
-    repeated Args reporters = 2;
-    repeated Args resourcers = 3;
+    Args validators = 1;
+    Args reporters = 2;
+    Args resourcers = 3;
 }
 
 message Progress {

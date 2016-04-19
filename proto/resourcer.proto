@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package lintflow.core;
+
+service ResourcerService {
+    // валидатор запросит паритию данных, получит их по стриму и дальше попросит по стриму еще данных
+    rpc Get(ConfigRequest) returns (stream Resource) {}
+}
+
+message ConfigRequest {
+    // сам конфиг для получения данных
+    bytes config = 1;
+}
+
+
+message Resource {
+    string header = 1;
+    bytes body = 2;
+    int64 total = 3;
+}
+
+

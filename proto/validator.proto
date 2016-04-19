@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package lintflow.core;
+
+import "proto/lookupd.proto";
+
+service ValidatorService {
+    rpc Validate(ValidationTask) returns (stream ValidateProgress) {}
+}
+
+message ValidationTask {
+    message Args {
+        Service service = 1;
+        bytes  config = 2;
+    }
+    bytes config   = 1;
+    Args reporter = 2;
+    Args resourcer = 3;
+}
+
+message ValidateProgress {
+    message Progress {
+        //  ID of service
+        string id = 1;
+        // all data
+        int64 total = 2;
+        // already processed
+        int64 current = 3;
+    }
+    Progress reporter = 1;
+    Progress resourser = 2;
+}
