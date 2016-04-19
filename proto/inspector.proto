@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package lintflow.core;
+
+import "proto/lookupd.proto";
+
+service InspectorService {
+    rpc Inspect(Task) returns (stream Progress) {}
+}
+
+message Task {
+    message Args {
+        Service service = 1;
+        bytes  config = 2;
+    }
+    repeated Args validators = 1;
+    repeated Args reporters = 2;
+    repeated Args resourcers = 3;
+}
+
+message Progress {
+    string id = 1;
+    int64 total = 2;
+    int64 current = 3;
+}

@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package lintflow.core;
+
+service LookupdService {
+    // метод позволяет сервисам реистриваться сервисам
+    // для того чтобы потом их можно было использовать инспектору
+    rpc Register(RegisterRequest) returns (RegisterResponse) {}
+
+    rpc List(ListRequest) returns (ListResponse) {}
+}
+
+// тип сервис описывает объект сервиса
+message Service {
+    // юникальный идентификатор сервиса
+    string id = 1;
+    // адрес сервиса в сети
+    //  как пример localhost:45679
+    string address = 2;
+
+    string name = 3;
+
+    string description = 4;
+
+    repeated string tags = 5;
+
+    enum Type {
+        RESOURCER = 0;
+        LINTER = 1;
+        REPORTER = 2;
+    }
+
+    // декларирует тип сервиса
+    Type type = 6;
+
+    // конфигруатор сервиса
+    // там описана специфика севиса для выполенкния задач
+    bytes task_config = 7;
+}
+
+
+message ListRequest {
+    enum SearchType {
+        ANY = 0;
+        RESOURCER = 1;
+        LINTER = 2;
+        REPORTER = 3;
+    }
+
+    SearchType type = 1;
+}
+
+message ListResponse {
+    repeated Service services = 1;
+}
+
+// запрос на регистрацию сервиса
+message RegisterRequest {
+    Service service = 1;
+}
+
+// ответ на регистрацию
+message RegisterResponse {
+    bool ok = 1;
+}
