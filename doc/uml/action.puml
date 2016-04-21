@@ -1,0 +1,37 @@
+@startuml
+D --> L: Register
+R --> L: Register
+V --> L: Register
+User -> I: Show me list services
+I --> L: List
+I <-- L: [D,R,V]
+I -> User: [D,R,V]
+User -> I: Create task by[D,R,V]
+I -> User: OK {task:1}
+User -> I: Inspect(task:1)
+activate I
+I --> User: We start
+I --> L : Get(task:1:validator.name)
+I <-- L : return Service obj
+I --> V : Validate(ValidationTask)
+activate V
+V --> L :  Get(validateTask:resourser.name)
+L --> V : return Service obj
+V --> L :  Get (validateTask:reporter.name)
+L --> V : return Service obj
+loop all data
+V --> D : Get(validateTask:resourser.Config)
+V <-- D : return (some data)
+V --> V: validate (some data)
+V --> R: Write(problem if found)
+V <-- R: Ok
+V --> I: send progress
+I --> User: receive progress
+end
+D --> V: link to report
+V --> I: finish , see link
+deactivate V
+I --> User: receive msg of validator
+deactivate I
+User -> R: give me report by link
+@enduml

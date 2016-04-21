@@ -1,0 +1,26 @@
+@startuml
+
+package "Machina 1" {
+[Inspector] -> Lookupd1
+
+
+}
+
+package "Machina 2" {
+[Validator:Go] -> Lookupd2
+[Reporter:1] -> Lookupd2
+[Resourser:Git] -> Lookupd2
+
+Lookupd2 <-> Lookupd1
+}
+
+package "Machina 3" {
+[Validator:Spec] -> Lookupd3
+[Reporter:DB] -> Lookupd3
+[Resourser:DB] -> Lookupd3
+
+Lookupd3 <-> Lookupd2
+Lookupd1 <-> Lookupd3
+
+}
+@enduml
