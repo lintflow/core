@@ -1,0 +1,31 @@
+@startuml
+
+
+cloud "DataLinter Installation"{
+    package "Core" {
+    interface GRPC
+    [Inspector] <-> GRPC
+    [Lookupd] <-> GRPC
+    }
+
+    package "Git" {
+    GIT -> [Resourser]
+    [Resourser] <-> GRPC
+    }
+
+    package "GoLint" {
+    GRPC <-> [Validator]
+    golint <-> [Validator]
+    }
+
+    package "Elastic" {
+    GRPC <-> [Reporter]
+    ElasticSearch <-> [Reporter]
+    }
+}
+
+node "client-tools" {
+    GRPC <-> [client-golang]
+    GRPC <-> [web-application]
+}
+@enduml
