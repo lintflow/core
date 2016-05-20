@@ -5,7 +5,10 @@ package lintflow.core;
 import "proto/lookupd.proto";
 
 service InspectorService {
+    //run task to inspectation
     rpc Inspect(Task) returns (stream Progress) {}
+    // return avialability services for usage
+    rpc Services(ListRequest) returns (ListResponse) {}
 }
 
 message Task {
