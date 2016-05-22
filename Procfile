@@ -1,0 +1,2 @@
+lookupd: lookupd
+inspector: inspector
