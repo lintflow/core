@@ -4,12 +4,12 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/grpclog"
 
-	"errors"
-	"fmt"
-	"github.com/golang/lint"
+	//"errors"
+	//"fmt"
+	//"github.com/golang/lint"
 	pb "github.com/lintflow/core/proto"
 	"google.golang.org/grpc"
-	"io"
+	//"io"
 	"sync"
 )
 
@@ -76,39 +76,39 @@ func (v *validator) Reporter(addr string) (pb.ReporterServiceClient, error) {
 
 func (v *validator) Validate(t *pb.ValidationTask, s pb.ValidatorService_ValidateServer) error {
 
-	resourser := t.GetResourcer()
-	rs, err := v.Resourcer(resourser.GetService().Address)
-	if err != nil {
-		return err
-	}
-	rp, err := v.Reporter(t.Reporter().GetService().Address)
-	if err != nil {
-		return err
-	}
+	//resourser := t.GetResourcer()
+	//rs, err := v.Resourcer(resourser.GetService().Address)
+	//if err != nil {
+	//	return err
+	//}
+	//rp, err := v.Reporter(t.Reporter().GetService().Address)
+	//if err != nil {
+	//	return err
+	//}
 
 	// открывает стрим на получение данных
-	streamOfResourse, err := rs.Get(s.Context(), resourser.Config)
-	if err != nil {
-		return err
-	}
-
-	linter := new(lint.Linter)
-
-	for {
-		file, err := streamOfResourse.Recv()
-		if err == io.EOF {
-			return
-		}
-		if err != nil {
-			return err
-		}
-
-		problems, err := linter.Lint(file.Header, file.Body)
-		if err != nil {
-			return err
-		}
-
-		rp
-	}
+	//streamOfResourse, err := rs.Get(s.Context(), *pb.ConfigRequest{Config: resourser.Config})
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//linter := new(lint.Linter)
+	//
+	//for {
+	//	file, err := streamOfResourse.Recv()
+	//	if err == io.EOF {
+	//		return
+	//	}
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	_, err = linter.Lint(file.Header, file.Body)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	//rp
+	//}
 	return nil
 }
