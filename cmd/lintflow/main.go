@@ -5,7 +5,8 @@ import (
 
 	pb "github.com/lintflow/core/proto"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
+
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
