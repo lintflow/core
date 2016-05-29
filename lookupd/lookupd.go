@@ -31,7 +31,7 @@ func (k *kv) Get(key string) *pb.Service {
 func (k *kv) Set(key string, service *pb.Service) {
 	if service != nil {
 		k.lock.Lock()
-		service = k.store[key]
+		k.store[key] = service
 		k.lock.Unlock()
 	}
 }
@@ -39,7 +39,7 @@ func (k *kv) Set(key string, service *pb.Service) {
 func (k *kv) List(filter *pb.ListRequest) []*pb.Service {
 	services := []*pb.Service{}
 	for _, service := range k.store {
-		if filter.Type == 0 {
+		if filter.Type == pb.ListRequest_ANY {
 			services = append(services, service)
 		} else if service.Type.String() == filter.Type.String() {
 			services = append(services, service)
@@ -52,7 +52,7 @@ var store = &kv{store: make(map[string]*pb.Service, 0)}
 
 func (l *lookupd) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	service := req.GetService()
-	if service != nil {
+	if service == nil {
 		return nil, errors.New(`bad value`)
 	}
 

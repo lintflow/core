@@ -8,7 +8,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
+	"fmt"
+	_ "net/http/pprof"
+
 	pb "github.com/lintflow/core/proto"
+	"net/http"
 )
 
 var (
@@ -23,6 +27,7 @@ func main() {
 	}
 	grpcServer := grpc.NewServer()
 
+	go http.ListenAndServe(fmt.Sprintf(":%d", 36662), nil)
 	pb.RegisterLookupdServiceServer(grpcServer, lookupd.New())
 	grpcServer.Serve(lis)
 }

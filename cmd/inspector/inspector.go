@@ -7,8 +7,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
+	"fmt"
 	"github.com/lintflow/core/inspector"
 	pb "github.com/lintflow/core/proto"
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var (
@@ -34,6 +37,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	defer grpcServer.Stop()
 
+	go http.ListenAndServe(fmt.Sprintf(":%d", 36663), nil)
 	pb.RegisterInspectorServiceServer(grpcServer, inspector.New(pb.NewLookupdServiceClient(conn)))
 	grpcServer.Serve(lis)
 }

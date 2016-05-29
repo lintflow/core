@@ -1,0 +1,18 @@
+Tasks:
+
+ID                                      | Name           
+-------------------------------------------------------------------------
+550e8400-e29b-41d4-a716-446655440000    | lint-of-my-project
+_________________________________________________________________________
+Data:
+	git:
+		uri: https://github.org/lilakurse/my-go-code.git
+Validators:
+	golinter:
+		type: strict
+	govet:
+		config: all
+Reporters:
+	file:
+		new: always
+

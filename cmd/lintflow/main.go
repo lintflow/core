@@ -6,6 +6,7 @@ import (
 	pb "github.com/lintflow/core/proto"
 
 	"code.google.com/p/go.net/context"
+	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 )
@@ -31,9 +32,9 @@ func main() {
 		if err != nil {
 			grpclog.Fatalf("failed get services: %v", err)
 		} else {
-			grpclog.Println(`services:`)
+			fmt.Println(`services:`)
 			for _, service := range resp.GetServices() {
-				grpclog.Println("\t" + service.String())
+				fmt.Println("\t" + service.String())
 			}
 		}
 	}

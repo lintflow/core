@@ -3,8 +3,22 @@ syntax = "proto3";
 package lintflow.core;
 
 service ReporterService {
-
+    rpc Record(stream Problem) returns (ReportSummary) {}
 }
 
 message Problem {
+    message Detail {
+        string id =1;
+        bytes fragment = 2;
+        string description = 3;
+    }
+
+    string id =1;
+    bytes original = 2;
+    repeated Detail details =3;
+}
+
+message ReportSummary {
+    string link=1;
+    int64 total=2;
 }
