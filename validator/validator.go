@@ -82,13 +82,13 @@ func (v *validator) Validate(t *pb.ValidationTask, s pb.ValidatorService_Validat
 	if err != nil {
 		return err
 	}
-	rp, err := v.Reporter(t.Reporter().GetService().Address)
+	rp, err := v.Reporter(t.GetReporter().GetService().Address)
 	if err != nil {
 		return err
 	}
 
 	// открывает стрим на получение данных
-	streamOfResourse, err := rs.Get(s.Context(), *pb.ConfigRequest{Config: resourser.Config})
+	streamOfResourse, err := rs.Get(s.Context(), &pb.ConfigRequest{Config: resourser.Config})
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,11 @@ func (v *validator) Validate(t *pb.ValidationTask, s pb.ValidatorService_Validat
 		current++
 		if err == io.EOF {
 			// закрываем ресурсер
-			streamOfResourse.CloseSend()
+			err = streamOfResourse.CloseSend()
+			if err != nil {
+				return err
+			}
+
 			// закрываем репортер и получаем ссылку на отчет
 			summary, err := writer.CloseAndRecv()
 			if err != nil {
@@ -122,8 +126,8 @@ func (v *validator) Validate(t *pb.ValidationTask, s pb.ValidatorService_Validat
 				},
 				Resourser: &pb.ValidateProgress_Progress{
 					Id:      uuid.New(),
-					Total:   current,
-					Current: current,
+					Total:   int64(current),
+					Current: int64(current),
 				},
 				LinkToReport: summary.Link,
 			})
@@ -160,12 +164,12 @@ func (v *validator) Validate(t *pb.ValidationTask, s pb.ValidatorService_Validat
 			Reporter: &pb.ValidateProgress_Progress{
 				Id:      uuid.New(),
 				Total:   file.Total,
-				Current: countProblems,
+				Current: int64(countProblems),
 			},
 			Resourser: &pb.ValidateProgress_Progress{
 				Id:      uuid.New(),
 				Total:   file.Total,
-				Current: current,
+				Current: int64(current),
 			},
 			LinkToReport: "",
 		})

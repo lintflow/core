@@ -17,7 +17,6 @@ func New(lookuper pb.LookupdServiceClient) pb.InspectorServiceServer {
 }
 
 func (v *inspector) GetConnection(addr string) (conn *grpc.ClientConn, err error) {
-
 	var ok bool
 	v.Lock()
 	conn, ok = v.c[addr]
@@ -61,9 +60,15 @@ func (i *inspector) Inspect(task *pb.Task, stream pb.InspectorService_InspectSer
 		return err
 	}
 	progressor, err := validator.Validate(stream.Context(), &pb.ValidationTask{
-		Config:    lintOptions.Config,
-		Reporter:  task.GetReporters(),
-		Resourcer: task.GetResourcers(),
+		Config: lintOptions.Config,
+		Reporter: &pb.ValidationTask_Args{
+			Service: task.GetReporters().Service,
+			Config:  task.GetReporters().Config,
+		},
+		Resourcer: &pb.ValidationTask_Args{
+			Service: task.GetResourcers().Service,
+			Config:  task.GetResourcers().Config,
+		},
 	})
 	if err != nil {
 		return err

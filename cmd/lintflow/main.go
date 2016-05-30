@@ -8,11 +8,18 @@ import (
 	"golang.org/x/net/context"
 
 	"fmt"
+	"github.com/sethgrid/multibar"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
+	"io"
+	"strconv"
 )
 
 var DefaultInspector string = `localhost:4568`
+
+var (
+	uri = flag.String(`repo`, `https://github.com/lintflow/golang-test-project.git`, `your repo with go project for validate here`)
+)
 
 func main() {
 	flag.Parse()
@@ -38,5 +45,56 @@ func main() {
 				fmt.Println("\t" + service.String())
 			}
 		}
+	case `inspect`:
+		resp, err := inspector.Services(context.Background(), new(pb.ListRequest))
+		task := &pb.Task{}
+		if err != nil {
+			grpclog.Fatalf("failed get services: %v", err)
+		} else {
+			for _, service := range resp.GetServices() {
+				switch service.Type {
+				case pb.Service_LINTER:
+					task.Validators = &pb.Task_Args{Service: service}
+				case pb.Service_REPORTER:
+					task.Reporters = &pb.Task_Args{Service: service}
+				case pb.Service_RESOURCER:
+					task.Resourcers = &pb.Task_Args{
+						Service: service,
+						Config:  []byte(`{"url":"` + *uri + `"}`),
+					}
+				}
+			}
+		}
+
+		progress, err := inspector.Inspect(context.Background(), task)
+		if err != nil {
+			grpclog.Fatalf("failed start incpect task %s: %v", task, err)
+		}
+		progressBars, _ := multibar.New()
+		progressBars.Println()
+		var progBar multibar.ProgressFunc
+
+		go progressBars.Listen()
+
+		for {
+			info, err := progress.Recv()
+			if err == io.EOF {
+				progress.CloseSend()
+				progressBars.Println(`finished`)
+				return
+			}
+			if err != nil {
+				grpclog.Fatalf("failed recive data: %v", err)
+			}
+			if progBar == nil {
+				progBar = progressBars.MakeBar(int(info.Total), `total`)
+			}
+			progBar(int(info.Current))
+			if info.Link != "" {
+				println(`see your report here - ` + info.Link)
+				println(`was finded ` + strconv.Itoa(int(info.Problems)) + ` problems in ` + strconv.Itoa(int(info.Total)) + ` files.`)
+			}
+		}
 	}
+
 }

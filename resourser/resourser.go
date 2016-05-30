@@ -9,7 +9,11 @@ import (
 	pb "github.com/lintflow/core/proto"
 
 	"github.com/pborman/uuid"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 type resourser struct {
@@ -32,7 +36,7 @@ func New(s *pb.Service, lookuper pb.LookupdServiceClient) pb.ResourcerServiceSer
 }
 
 func (r *resourser) Get(req *pb.ConfigRequest, stream pb.ResourcerService_GetServer) error {
-	if len(req.Config) {
+	if len(req.Config) == 0 {
 		return errors.New(`bad config`)
 	}
 	git := &struct {
@@ -54,7 +58,7 @@ func (r *resourser) Get(req *pb.ConfigRequest, stream pb.ResourcerService_GetSer
 		err = stream.Send(&pb.Resource{
 			Header: filename,
 			Body:   blob,
-			Total:  total,
+			Total:  int64(total),
 		})
 		if err != nil {
 			return err
@@ -66,35 +70,73 @@ func (r *resourser) Get(req *pb.ConfigRequest, stream pb.ResourcerService_GetSer
 type FsIter interface {
 	Next() bool
 	File() (string, []byte)
-	Init() (int64, error)
+	Init() (int, error)
 	Err() error
 }
 
 func (r *resourser) newFsIter(uri string) FsIter {
-	return &fsiter{uuid.New(), uri, nil}
+	return &fsiter{
+		id:  uuid.New(),
+		uri: uri,
+	}
 }
 
 type fsiter struct {
-	id  string
-	uri string
-	err error
+	id      string
+	uri     string
+	err     error
+	files   []string
+	current int
 }
 
 func (f *fsiter) Next() bool {
-	return false
+	length := len(f.files)
+	if length == 0 {
+		f.err = errors.New(`dir not have golang project or file *.go patterns`)
+		return false
+	}
+	f.current++
+	// end of array
+	if f.current-1 == length {
+		return false
+	}
+	return true
 }
 func (f *fsiter) File() (string, []byte) {
-	return "", []byte(``)
+	filename := f.files[f.current-1]
+	blob, _ := ioutil.ReadFile(filename)
+	return filename, blob
 }
 
 func (f *fsiter) Err() error {
 	return f.err
 }
 
-func (f *fsiter) Init() (int64, error) {
+func (f *fsiter) walk(path string, info os.FileInfo, err error) error {
+	if info.IsDir() && info.Name() == `.git` {
+		return filepath.SkipDir
+	}
+	if info.IsDir() {
+		return nil
+	}
+
+	if !strings.Contains(path, `.go`) {
+		return nil
+	}
+
+	f.files = append(f.files, path)
+	return nil
+}
+
+func (f *fsiter) Init() (int, error) {
 	err := exec.Command(`git`, `clone`, f.uri, `/tmp/`+f.id).Run()
-	if err != nil {
+	if err != nil && err.Error() != `exit status 128` {
 		return 0, err
 	}
 
+	err = filepath.Walk(`/tmp/`+f.id, f.walk)
+	if err != nil {
+		return 0, err
+	}
+	return len(f.files), nil
 }
