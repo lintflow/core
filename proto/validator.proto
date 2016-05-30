@@ -29,4 +29,5 @@ message ValidateProgress {
     }
     Progress reporter = 1;
     Progress resourser = 2;
+    string   link_to_report = 3;
 }

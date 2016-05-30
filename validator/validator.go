@@ -6,10 +6,11 @@ import (
 
 	//"errors"
 	//"fmt"
-	//"github.com/golang/lint"
+	"github.com/golang/lint"
 	pb "github.com/lintflow/core/proto"
+	"github.com/pborman/uuid"
 	"google.golang.org/grpc"
-	//"io"
+	"io"
 	"sync"
 )
 
@@ -76,39 +77,102 @@ func (v *validator) Reporter(addr string) (pb.ReporterServiceClient, error) {
 
 func (v *validator) Validate(t *pb.ValidationTask, s pb.ValidatorService_ValidateServer) error {
 
-	//resourser := t.GetResourcer()
-	//rs, err := v.Resourcer(resourser.GetService().Address)
-	//if err != nil {
-	//	return err
-	//}
-	//rp, err := v.Reporter(t.Reporter().GetService().Address)
-	//if err != nil {
-	//	return err
-	//}
+	resourser := t.GetResourcer()
+	rs, err := v.Resourcer(resourser.GetService().Address)
+	if err != nil {
+		return err
+	}
+	rp, err := v.Reporter(t.Reporter().GetService().Address)
+	if err != nil {
+		return err
+	}
 
 	// открывает стрим на получение данных
-	//streamOfResourse, err := rs.Get(s.Context(), *pb.ConfigRequest{Config: resourser.Config})
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//linter := new(lint.Linter)
-	//
-	//for {
-	//	file, err := streamOfResourse.Recv()
-	//	if err == io.EOF {
-	//		return
-	//	}
-	//	if err != nil {
-	//		return err
-	//	}
-	//
-	//	_, err = linter.Lint(file.Header, file.Body)
-	//	if err != nil {
-	//		return err
-	//	}
-	//
-	//	//rp
-	//}
+	streamOfResourse, err := rs.Get(s.Context(), *pb.ConfigRequest{Config: resourser.Config})
+	if err != nil {
+		return err
+	}
+
+	writer, err := rp.Record(s.Context())
+	if err != nil {
+		return err
+	}
+
+	linter := new(lint.Linter)
+
+	current := 0
+	countProblems := 0
+	for {
+		file, err := streamOfResourse.Recv()
+		current++
+		if err == io.EOF {
+			// закрываем ресурсер
+			streamOfResourse.CloseSend()
+			// закрываем репортер и получаем ссылку на отчет
+			summary, err := writer.CloseAndRecv()
+			if err != nil {
+				return err
+			}
+			// пишем последний прогресс
+			return s.Send(&pb.ValidateProgress{
+				Reporter: &pb.ValidateProgress_Progress{
+					Id:      uuid.New(),
+					Total:   file.Total,
+					Current: summary.Total,
+				},
+				Resourser: &pb.ValidateProgress_Progress{
+					Id:      uuid.New(),
+					Total:   current,
+					Current: current,
+				},
+				LinkToReport: summary.Link,
+			})
+		}
+		if err != nil {
+			return err
+		}
+
+		problems, err := linter.Lint(file.Header, file.Body)
+		if err != nil {
+			return err
+		}
+
+		report := &pb.Problem{
+			Id:       uuid.New() + `/` + file.Header,
+			Original: file.Body,
+		}
+
+		for _, problem := range problems {
+			report.Details = append(report.Details, &pb.Problem_Detail{
+				Id:          uuid.New(),
+				Fragment:    []byte(problem.Position.String()),
+				Description: problem.Category + `:` + problem.String(),
+			})
+			countProblems++
+		}
+
+		err = writer.Send(report)
+		if err != nil {
+			return err
+		}
+
+		err = s.Send(&pb.ValidateProgress{
+			Reporter: &pb.ValidateProgress_Progress{
+				Id:      uuid.New(),
+				Total:   file.Total,
+				Current: countProblems,
+			},
+			Resourser: &pb.ValidateProgress_Progress{
+				Id:      uuid.New(),
+				Total:   file.Total,
+				Current: current,
+			},
+			LinkToReport: "",
+		})
+
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
