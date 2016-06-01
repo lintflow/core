@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
-	bar "gopkg.in/cheggaaa/pb.v1"
+
 	"io"
 	"strconv"
 )
@@ -71,22 +71,17 @@ func main() {
 			grpclog.Fatalf("failed start incpect task %s: %v", task, err)
 		}
 
-		var progBar *bar.ProgressBar
-
 		for {
 			info, err := progress.Recv()
 			if err == io.EOF || info == nil {
 				progress.CloseSend()
-				progBar.FinishPrint(`Finish!`)
+				println(`Finish!`)
 				return
 			}
 			if err != nil {
 				grpclog.Fatalf("failed recive data: %v", err)
 			}
-			if progBar == nil {
-				progBar = bar.StartNew(int(info.Total))
-			}
-			progBar.Increment()
+			println("\t", info.Current, `/`, info.Total)
 			if info.Link != "" {
 				println(`see your report here - ` + info.Link)
 				println(`was finded ` + strconv.Itoa(int(info.Problems)) + ` problems in ` + strconv.Itoa(int(info.Total)) + ` files.`)

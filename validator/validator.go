@@ -138,10 +138,8 @@ func (v *validator) Validate(t *pb.ValidationTask, s pb.ValidatorService_Validat
 				},
 				LinkToReport: link,
 			})
-			if err != nil {
-				println(`error Send`, err.Error())
-			}
-			return nil
+
+			return err
 		}
 		if err != nil {
 			return err

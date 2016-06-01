@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 type resourser struct {
@@ -123,7 +122,8 @@ func (f *fsiter) walk(path string, info os.FileInfo, err error) error {
 		return nil
 	}
 
-	if !strings.Contains(path, `.go`) {
+	runs := []rune(path)
+	if string(runs[len(runs)-3:]) != `.go` {
 		return nil
 	}
 
