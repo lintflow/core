@@ -8,9 +8,9 @@ import (
 	"golang.org/x/net/context"
 
 	"fmt"
-	"github.com/sethgrid/multibar"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
+	bar "gopkg.in/cheggaaa/pb.v1"
 	"io"
 	"strconv"
 )
@@ -70,26 +70,23 @@ func main() {
 		if err != nil {
 			grpclog.Fatalf("failed start incpect task %s: %v", task, err)
 		}
-		progressBars, _ := multibar.New()
-		progressBars.Println()
-		var progBar multibar.ProgressFunc
 
-		go progressBars.Listen()
+		var progBar *bar.ProgressBar
 
 		for {
 			info, err := progress.Recv()
-			if err == io.EOF {
+			if err == io.EOF || info == nil {
 				progress.CloseSend()
-				progressBars.Println(`finished`)
+				progBar.FinishPrint(`Finish!`)
 				return
 			}
 			if err != nil {
 				grpclog.Fatalf("failed recive data: %v", err)
 			}
 			if progBar == nil {
-				progBar = progressBars.MakeBar(int(info.Total), `total`)
+				progBar = bar.StartNew(int(info.Total))
 			}
-			progBar(int(info.Current))
+			progBar.Increment()
 			if info.Link != "" {
 				println(`see your report here - ` + info.Link)
 				println(`was finded ` + strconv.Itoa(int(info.Problems)) + ` problems in ` + strconv.Itoa(int(info.Total)) + ` files.`)

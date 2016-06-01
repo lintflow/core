@@ -36,6 +36,8 @@ func (r *reporter) Record(s pb.ReporterService_RecordServer) error {
 	if err != nil {
 		return err
 	}
+	defer closer()
+
 	for {
 		problem, err := s.Recv()
 		if err == io.EOF {
@@ -43,21 +45,19 @@ func (r *reporter) Record(s pb.ReporterService_RecordServer) error {
 			if err != nil {
 				return err
 			}
-			err = s.SendAndClose(&pb.ReportSummary{
+			return s.SendAndClose(&pb.ReportSummary{
 				Link:  link,
 				Total: int64(total),
 			})
-			if err != nil {
-				return err
-			}
-			err = closer()
-			if err != nil {
-				return err
-			}
 		}
+		if err != nil {
+			return err
+		}
+
 		if problem == nil {
 			continue
 		}
+
 		total++
 
 		for _, detail := range problem.Details {

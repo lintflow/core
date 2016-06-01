@@ -76,7 +76,8 @@ func (i *inspector) Inspect(task *pb.Task, stream pb.InspectorService_InspectSer
 	for {
 		progress, err := progressor.Recv()
 		if err == io.EOF {
-			progressor.CloseSend()
+			return nil
+
 		}
 		if err != nil {
 			return err

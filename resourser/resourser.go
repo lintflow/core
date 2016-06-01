@@ -113,6 +113,9 @@ func (f *fsiter) Err() error {
 }
 
 func (f *fsiter) walk(path string, info os.FileInfo, err error) error {
+	if info == nil {
+		return nil
+	}
 	if info.IsDir() && info.Name() == `.git` {
 		return filepath.SkipDir
 	}
